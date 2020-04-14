@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 });
 app.get("/urls.json",(req, res) => {
   res.json(urlDatabase);
-}); 
+});
 app.get("/hello", (req, res) => {
   res.render("<html><body>Hello <b>World</b></body></html>\n");
 });
@@ -34,7 +34,7 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 app.post("/urls", (req, res) => {
-  console.log(req.body); 
+  console.log(req.body);
   urlDatabase[generateRandomString()] = req.body["longURL"];
   res.redirect("/urls");
 });
@@ -47,9 +47,8 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port${PORT}!`);
 });
 
-
 function generateRandomString() {
   let tinyURL = Math.random().toString(36).substring(6);
-return tinyURL
-};
+  return tinyURL;
+}
 
