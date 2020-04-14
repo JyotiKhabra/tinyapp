@@ -33,6 +33,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[shortURL];
   res.redirect("/urls")
 });
+app.post("/urls/:shortURL/edit", (req, res) => {
+  const { shortURL } = req.params;
+  urlDatabase[shortURL] = req.body.longURL
+  res.redirect("/urls")
+});
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   let templateVars = {shortURL, longURL: urlDatabase[shortURL]};
@@ -55,5 +60,5 @@ app.listen(PORT, () => {
 function generateRandomString() {
   let tinyURL = Math.random().toString(36).substring(6);
   return tinyURL;
-}
+};
 
