@@ -8,6 +8,8 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        <a class="nav-item nav-link" href="/urls/register">Create New Account</a>
+
      </div>
     </div>
 
@@ -16,7 +18,7 @@
       <form method="POST" action="/logout"><button type="submit" class="btn btn-outline-dark">Logout</button>
         </form
     <%} else { %>
-      <form method="POST" action="/login"> <input type="text" name="username" placeholder="Username: Jane" style="width: 200px; margin: 1em"><button type="submit" class="btn btn-outline-dark">Login</button>
+      <form method="POST" action="/login"> <input type="text" name="username" style="width: 200px; margin: 1em"><button type="submit" class="btn btn-outline-dark">Login</button>
         </form
       <% } %>
   </nav>
