@@ -13,8 +13,8 @@
      </div>
     </div>
 
-     <% if(username){ %>
-      <span style = "margin: 10px"><%= username %></span>
+     <% if(user){ %>
+      <span style = "margin: 10px"><%= user.email %></span>
       <form method="POST" action="/logout"><button type="submit" class="btn btn-outline-dark">Logout</button>
         </form
     <%} else { %>

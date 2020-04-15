@@ -15,6 +15,20 @@ const urlDatabase = {
   // "shortURL": "longURL"
 };
 
+const users ={
+  "userRandomID": {
+    id: "userRandom",
+    email: "user@example.com",
+    password: "password1"
+  },
+  "user2RandomID": {
+    username: "user2RandomID",
+    email: "user2@mail.com",
+    password: "password2"
+  }
+}
+
+
 app.get("/", (req, res) => {
   res.render("Hello!");
 });
@@ -25,19 +39,22 @@ app.get("/hello", (req, res) => {
   res.render("<html><body>Hello <b>World</b></body></html>\n");
 });
 app.get("/urls", (req, res) => {
-  let templateVars = {  
-  username: req.cookies["username"],
-  urls: urlDatabase };
+    const userId = req.cookies.id;
+    const user = users[userId];
+    let templateVars = { user,
+    urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 app.get("/urls/register", (req, res) => {
-  let templateVars = {  
-    username: ""};
+  const userId = req.cookies.id;
+  const user = users[userId];
+  let templateVars = { user };
   res.render("urls_register", templateVars);
 });
 app.get("/urls/new", (req, res) => {
-  let templateVars = {  
-    username: req.cookies["username"]};
+  const userId = req.cookies.id;
+  const user = users[userId];
+  let templateVars = { user };
   res.render("urls_new", templateVars);
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -54,9 +71,14 @@ app.post("/login", (req, res) => {
   res.cookie("username", req.body.username);
   res.redirect("/urls")
 });
-app.post("/register", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls")
+app.post("/urls/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const id = generateRandomId();
+  users[id] = { id, email, password };
+  console.log(users)
+  res.cookie("id", id);
+  res.redirect("/urls");
 });  
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
@@ -64,8 +86,9 @@ app.post("/logout", (req, res) => {
 });
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  let templateVars = {shortURL, longURL: urlDatabase[shortURL], username: req.cookies["username"],
-};
+  const userId = req.cookies.id;
+  const user = users[userId];
+  let templateVars = {shortURL, longURL: urlDatabase[shortURL], user};
   res.render("urls_show", templateVars);
 });
 app.post("/urls", (req, res) => {
@@ -85,5 +108,9 @@ app.listen(PORT, () => {
 function generateRandomString() {
   let tinyURL = Math.random().toString(36).substring(6);
   return tinyURL;
+}; 
+function generateRandomId() {
+  let userId = Math.random().toString(36).substring(6);
+  return userId;
 };
 
