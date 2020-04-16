@@ -6,7 +6,6 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
-
 app.set("view engine", "ejs");
 
 const urlDatabase = {
@@ -28,7 +27,34 @@ const users ={
   }
 }
 
+function generateRandomString() {
+  let tinyURL = Math.random().toString(36).substring(6);
+  return tinyURL;
+}; 
+function generateRandomId() {
+  let userId = Math.random().toString(36).substring(6);
+  return userId;
+};
 
+function existingUser(req, res) {
+  const email = req.body.email;
+  const password = req.body.password;
+  if(email === "" && password === ""){
+    return false;
+  } 
+  for(const id in users){
+    if(users[id].email === email){
+      return false
+    }
+   // } else {
+    //  const id = generateRandomId();
+     // users[id] = { id, email, password };
+     // console.log(users)
+   // }
+  }
+  return true;
+}; 
+  
 app.get("/", (req, res) => {
   res.render("Hello!");
 });
@@ -72,13 +98,17 @@ app.post("/login", (req, res) => {
   res.redirect("/urls")
 });
 app.post("/urls/register", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  const id = generateRandomId();
-  users[id] = { id, email, password };
-  console.log(users)
-  res.cookie("id", id);
-  res.redirect("/urls");
+  if (existingUser(req, res)) {
+    const email = req.body.email;
+    const password = req.body.password;
+    const id = generateRandomId();
+    users[id] = { id, email, password };
+    res.cookie("id", id);
+    res.redirect("/urls");
+  } else{
+  res.status(400).send("error")
+  };
+  
 });  
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
@@ -105,12 +135,6 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port${PORT}!`);
 });
 
-function generateRandomString() {
-  let tinyURL = Math.random().toString(36).substring(6);
-  return tinyURL;
-}; 
-function generateRandomId() {
-  let userId = Math.random().toString(36).substring(6);
-  return userId;
-};
+
+
 
