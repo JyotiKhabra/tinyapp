@@ -16,16 +16,17 @@ const urlDatabase = {
 
 const users ={
   "userRandomID": {
-    id: "userRandom",
+    id: "userRandomID",
     email: "user@example.com",
     password: "password1"
   },
   "user2RandomID": {
-    username: "user2RandomID",
+    id: "user2RandomID",
     email: "user2@mail.com",
     password: "password2"
   }
 }
+
 
 function generateRandomString() {
   let tinyURL = Math.random().toString(36).substring(6);
@@ -35,24 +36,19 @@ function generateRandomId() {
   let userId = Math.random().toString(36).substring(6);
   return userId;
 };
-
-function existingUser(req, res) {
-  const email = req.body.email;
-  const password = req.body.password;
-  if(email === "" && password === ""){
-    return false;
-  } 
+function getUserByEmail(email){
   for(const id in users){
-    if(users[id].email === email){
-      return false
+    let user = users[id]
+    if(user.email === email){
+      return user
     }
-   // } else {
-    //  const id = generateRandomId();
-     // users[id] = { id, email, password };
-     // console.log(users)
-   // }
   }
-  return true;
+  return null
+};    
+
+function getUserFromRequest(req) {
+  const email = req.body.email;
+  return getUserByEmail(email);
 }; 
   
 app.get("/", (req, res) => {
@@ -83,6 +79,12 @@ app.get("/urls/new", (req, res) => {
   let templateVars = { user };
   res.render("urls_new", templateVars);
 });
+app.get("/urls/login", (req, res) => {
+  const userId = req.cookies.id;
+  const user = users[userId];
+  let templateVars = { user };
+  res.render("urls_login", templateVars);
+});
 app.post("/urls/:shortURL/delete", (req, res) => {
   const { shortURL } = req.params;
   delete urlDatabase[shortURL];
@@ -93,23 +95,34 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   urlDatabase[shortURL] = req.body.longURL
   res.redirect("/urls")
 });
-app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls")
+app.post("/urls/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email);
+  if(user && password === user.password){
+    console.log("loginSUCESS!******");
+    res.cookie("id", user.id);
+    res.redirect("/urls")
+  } else { 
+    console.log("loginFailed!******");
+    res.redirect("/urls/login");
+  };
 });
 app.post("/urls/register", (req, res) => {
-  if (existingUser(req, res)) {
+  const password = req.body.password;
+    //if no password and user exists return error
+  if (getUserFromRequest(req) || password === "") {
+    res.status(400).send("error");
+    //else create new user and generate id
+  }else{
     const email = req.body.email;
-    const password = req.body.password;
     const id = generateRandomId();
     users[id] = { id, email, password };
     res.cookie("id", id);
     res.redirect("/urls");
-  } else{
-  res.status(400).send("error")
-  };
-  
-});  
+  }
+}); 
+
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls")
@@ -134,7 +147,3 @@ app.get("/u/:shortURL", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port${PORT}!`);
 });
-
-
-
-
