@@ -100,11 +100,9 @@ app.post("/urls/login", (req, res) => {
   const password = req.body.password;
   const user = getUserByEmail(email);
   if(user && password === user.password){
-    console.log("loginSUCESS!******");
     res.cookie("id", user.id);
     res.redirect("/urls")
   } else { 
-    console.log("loginFailed!******");
     res.redirect("/urls/login");
   };
 });
@@ -112,7 +110,7 @@ app.post("/urls/register", (req, res) => {
   const password = req.body.password;
     //if no password and user exists return error
   if (getUserFromRequest(req) || password === "") {
-    res.status(400).send("error");
+    res.status(403).send("error");
     //else create new user and generate id
   }else{
     const email = req.body.email;
@@ -124,7 +122,7 @@ app.post("/urls/register", (req, res) => {
 }); 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("id");
   res.redirect("/urls")
 });
 app.get("/urls/:shortURL", (req, res) => {
