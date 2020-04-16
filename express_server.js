@@ -9,8 +9,8 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "aJ481W" },
-  9sm5xk: { longURL: "http://www.google.com", userID: "aJ481W" }
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ481W" },
+  "9sm5xk": { longURL: "http://www.google.ca", userID: "aJ481W" }
   // "shortURL": "longURL"
 };
 
@@ -61,10 +61,10 @@ app.get("/hello", (req, res) => {
   res.render("<html><body>Hello <b>World</b></body></html>\n");
 });
 app.get("/urls", (req, res) => {
-    const userId = req.cookies.id;
-    const user = users[userId];
-    let templateVars = { user,
-    urls: urlDatabase };
+  const userId = req.cookies.id;
+  const user = users[userId];
+  let templateVars = { user,
+  urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 app.get("/urls/register", (req, res) => {
@@ -96,13 +96,30 @@ app.get("/urls/login", (req, res) => {
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
   const { shortURL } = req.params;
-  delete urlDatabase[shortURL];
-  res.redirect("/urls")
+  const userId = req.cookies.id;
+  if (userId === urlDatabase[shortURL].userID ) {
+    delete urlDatabase[shortURL];
+    res.redirect("/urls")
+  } else {
+    res.status(403).send("You are not logged in!");
+  }
 });
 app.post("/urls/:shortURL/edit", (req, res) => {  
-  const { shortURL } = req.params;
-  urlDatabase[shortURL] = req.body.longURL
-  res.redirect("/urls")
+  // TODO: 
+  const shortURL = req.params.shortURL;
+  //console.log("1",shortURL)
+  const userId = req.cookies.id;
+  //If user is not logged in
+  if(!userId) {
+    res.status(403).send("You are not logged in!")
+  }else if (userId === urlDatabase[shortURL].userID ) {
+    console.log("req.body.longURL", req.body.longURL)
+    urlDatabase[shortURL].longURL = req.body.longURL;
+    console.log("urlDatabase[shortURL]", urlDatabase[shortURL])
+    res.redirect("/urls")
+  } else {
+    res.status(403).send("You are not authorized to change this URL!");
+  }
 });
 app.post("/urls/login", (req, res) => {
   const email = req.body.email;
@@ -136,19 +153,37 @@ app.post("/logout", (req, res) => {
 });
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  console.log("shortURL", shortURL);
+  if(urlDatabase[shortURL]){
+  //if urlDatabase[shortURL] do stuff below. otherwise error because URL doesn't exist
   const userId = req.cookies.id;
   const user = users[userId];
-  let templateVars = {shortURL, longURL: urlDatabase[shortURL], user};
+  const longURL = urlDatabase[shortURL].longURL
+  let templateVars = {shortURL, longURL, user};
   res.render("urls_show", templateVars);
+  }else {
+    res.redirect("/urls");
+  }
 });
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  urlDatabase[generateRandomString()] = req.body["longURL"];
-  res.redirect("/urls");
+  const id = req.cookies.id;
+  if(id){
+    console.log("before", urlDatabase)
+    urlDatabase[generateRandomString()] = {longURL : req.body.longURL, userID: id };
+    console.log("After",urlDatabase)
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("You are not logged in!");
+}
 });
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  console.log("shortURL 1", shortURL, urlDatabase)
+  console.log("urlDatabase[shortURL]", urlDatabase[shortURL])
+  const longURL = urlDatabase[shortURL].longURL;
+  //console.log("shortURL2", urlDatabase[shortURL] )
+  console.log("LongURL 1", longURL)
+
   res.redirect(longURL);
 });
 app.listen(PORT, () => {
