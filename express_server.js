@@ -44,7 +44,17 @@ function getUserByEmail(email){
     }
   }
   return null
-};    
+};
+function urlsForUser(userID){
+  const newObjForUrls = {}
+  for(const url in urlDatabase ){
+    let oneUser = urlDatabase[url]
+    if(oneUser.userID === userID){
+    newObjForUrls[url] = oneUser;
+  }   
+}
+  return newObjForUrls; 
+};
 
 function getUserFromRequest(req) {
   const email = req.body.email;
@@ -63,9 +73,14 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const userId = req.cookies.id;
   const user = users[userId];
-  let templateVars = { user,
-  urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  const usersID = urlsForUser(userId)
+  let templateVars = { user, urls: usersID };
+  console.log("usersID", usersID)
+  if(!user){
+    res.redirect("urls/login");
+  } 
+  //only display urls belong to id 
+  res.render("urls_index", templateVars)
 });
 app.get("/urls/register", (req, res) => {
   const userId = req.cookies.id;
@@ -167,10 +182,13 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 app.post("/urls", (req, res) => {
   const id = req.cookies.id;
-  if(id){
-    console.log("before", urlDatabase)
+  //If user is not logged in
+  if(!id) {
+    res.status(403).send("You are not logged in!")
+  } else if(id){
+    //console.log("before", urlDatabase)
     urlDatabase[generateRandomString()] = {longURL : req.body.longURL, userID: id };
-    console.log("After",urlDatabase)
+    //console.log("After",urlDatabase)
     res.redirect("/urls");
   } else {
     res.status(403).send("You are not logged in!");
