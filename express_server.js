@@ -1,12 +1,16 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
+const cookieSession = require('cookie-session')
 const saltRounds = 10;
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['71NY499'],}));
 
 app.set("view engine", "ejs");
 
@@ -28,6 +32,8 @@ const users ={
     password: "password2"
   }
 }
+
+
 
 
 function generateRandomString() {
@@ -73,11 +79,11 @@ app.get("/hello", (req, res) => {
   res.render("<html><body>Hello <b>World</b></body></html>\n");
 });
 app.get("/urls", (req, res) => {
-  const userId = req.cookies.id;
+  const userId = req.session.id;
   const user = users[userId];
   const usersID = urlsForUser(userId)
   let templateVars = { user, urls: usersID };
-  console.log("usersID", usersID)
+  //console.log("usersID", usersID)
   if(!user){
     res.redirect("urls/login");
   } 
@@ -85,7 +91,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars)
 });
 app.get("/urls/register", (req, res) => {
-  const userId = req.cookies.id;
+  const userId = req.session.id;
   const user = users[userId];
   let templateVars = { user };
   res.render("urls_register", templateVars);
@@ -100,20 +106,20 @@ app.get("/urls/new", (req, res) => {
   if(!user){
     res.redirect("/urls/login");
   } else { 
-  res.cookie("id", user.id);
+  req.session.id = user.id;
   let templateVars = { user };
   res.render("urls_new", templateVars);
   }
 });
 app.get("/urls/login", (req, res) => {
-  const userId = req.cookies.id;
+  const userId = req.session.id;
   const user = users[userId];
   let templateVars = { user };
   res.render("urls_login", templateVars);
 });
 app.post("/urls/:shortURL/delete", (req, res) => {
   const { shortURL } = req.params;
-  const userId = req.cookies.id;
+  const userId = req.session.id;
   if (userId === urlDatabase[shortURL].userID ) {
     delete urlDatabase[shortURL];
     res.redirect("/urls")
@@ -125,14 +131,14 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   // TODO: 
   const shortURL = req.params.shortURL;
   //console.log("1",shortURL)
-  const userId = req.cookies.id;
+  const userId = req.session.id;
   //If user is not logged in
   if(!userId) {
     res.status(403).send("You are not logged in!")
   }else if (userId === urlDatabase[shortURL].userID ) {
-    console.log("req.body.longURL", req.body.longURL)
+    //console.log("req.body.longURL", req.body.longURL)
     urlDatabase[shortURL].longURL = req.body.longURL;
-    console.log("urlDatabase[shortURL]", urlDatabase[shortURL])
+    //console.log("urlDatabase[shortURL]", urlDatabase[shortURL])
     res.redirect("/urls")
   } else {
     res.status(403).send("You are not authorized to change this URL!");
@@ -143,7 +149,7 @@ app.post("/urls/login", (req, res) => {
   const password = req.body.password;
   const user = getUserByEmail(email);  
   if(user && bcrypt.compareSync(password, user.hashedPassword)) {
-    res.cookie("id", user.id);
+    req.session.id = user.id;
     res.redirect("/urls")
   } else { 
     res.redirect("/urls/login");
@@ -160,13 +166,13 @@ app.post("/urls/register", (req, res) => {
     const email = req.body.email;
     const id = generateRandomId();
     users[id] = { id, email, hashedPassword };
-    res.cookie("id", id);
+    req.session.id = id;
     res.redirect("/urls");
   }
 }); 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("id");
+  req.session.id = undefined;
   res.redirect("/urls")
 });
 app.get("/urls/:shortURL", (req, res) => {
@@ -174,7 +180,8 @@ app.get("/urls/:shortURL", (req, res) => {
   console.log("shortURL", shortURL);
   if(urlDatabase[shortURL]){
   //if urlDatabase[shortURL] do stuff below. otherwise error because URL doesn't exist
-  const userId = req.cookies.id;
+  const userId = req.session.id;
+  //const userId = req.cookies.id;
   const user = users[userId];
   const longURL = urlDatabase[shortURL].longURL
   let templateVars = {shortURL, longURL, user};
@@ -184,7 +191,8 @@ app.get("/urls/:shortURL", (req, res) => {
   }
 });
 app.post("/urls", (req, res) => {
-  const id = req.cookies.id;
+  const id = req.session.id
+  //const id = req.cookies.id;
   //If user is not logged in
   if(!id) {
     res.status(403).send("You are not logged in!")
