@@ -1,18 +1,24 @@
+//Required Packages
+
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
+const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session')
 const saltRounds = 10;
 const app = express();
 const PORT = 8080;
-const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ['71NY499'],}));
-
 app.set("view engine", "ejs");
+
+//Exported helperfunctions
+const { getUserByEmail, urlsForUser } = require('./helper_functions/finduserhelpers.js')
+const { generateRandomString, generateRandomId } = require('./helper_functions/generatestringshelpers.js')
+
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ481W" },
@@ -36,38 +42,38 @@ const users ={
 
 
 
-function generateRandomString() {
-  let tinyURL = Math.random().toString(36).substring(6);
-  return tinyURL;
-}; 
-function generateRandomId() {
-  let userId = Math.random().toString(36).substring(6);
-  return userId;
-};
-function getUserByEmail(email){
-  for(const id in users){
-    let user = users[id]
-    if(user.email === email){
-      return user
-    }
-  }
-  return null
-};
-function urlsForUser(userID){
-  const newObjForUrls = {}
-  for(const url in urlDatabase ){
-    let oneUser = urlDatabase[url]
-    if(oneUser.userID === userID){
-    newObjForUrls[url] = oneUser;
-  }   
-}
-  return newObjForUrls; 
-};
+// function generateRandomString() {
+//   let tinyURL = Math.random().toString(36).substring(6);
+//   return tinyURL;
+// }; 
+// function generateRandomId() {
+//   let userId = Math.random().toString(36).substring(6);
+//   return userId;
+// };
+// function getUserByEmail(email){
+//   for(const id in users){
+//     let user = users[id]
+//     if(user.email === email){
+//       return user
+//     }
+//   }
+//   return null
+// };
+// function urlsForUser(userID){
+//   const newObjForUrls = {}
+//   for(const url in urlDatabase ){
+//     let oneUser = urlDatabase[url]
+//     if(oneUser.userID === userID){
+//     newObjForUrls[url] = oneUser;
+//   }   
+// }
+//   return newObjForUrls; 
+// };
 
-function getUserFromRequest(req) {
-  const email = req.body.email;
-  return getUserByEmail(email);
-}; 
+// function getUserFromRequest(req) {
+//   const email = req.body.email;
+//   return getUserByEmail(email);
+// }; 
   
 app.get("/", (req, res) => {
   res.render("Hello!");
@@ -81,7 +87,8 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const userId = req.session.id;
   const user = users[userId];
-  const usersID = urlsForUser(userId)
+  const usersID = urlsForUser(userId, urlDatabase)
+  console.log("users:", users)
   let templateVars = { user, urls: usersID };
   //console.log("usersID", usersID)
   if(!user){
@@ -101,7 +108,7 @@ app.get("/urls/new", (req, res) => {
   console.log("email:", email)
   //const email = req.body.email;
   //console.log("email:", email);
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   console.log("user:", user);
   if(!user){
     res.redirect("/urls/login");
@@ -135,7 +142,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   //If user is not logged in
   if(!userId) {
     res.status(403).send("You are not logged in!")
-  }else if (userId === urlDatabase[shortURL].userID ) {
+  } else if (userId === urlDatabase[shortURL].userID ) {
     //console.log("req.body.longURL", req.body.longURL)
     urlDatabase[shortURL].longURL = req.body.longURL;
     //console.log("urlDatabase[shortURL]", urlDatabase[shortURL])
@@ -147,7 +154,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 app.post("/urls/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);  
+  const user = getUserByEmail(email, users);
   if(user && bcrypt.compareSync(password, user.hashedPassword)) {
     req.session.id = user.id;
     res.redirect("/urls")
@@ -158,14 +165,15 @@ app.post("/urls/login", (req, res) => {
 app.post("/urls/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
+  const email = req.body.email;
     //if no password and user exists return error
-  if (getUserFromRequest(req) || password === "") {
+  if (getUserByEmail(email, users) || password === "") {
     res.status(403).send("error");
     //else create new user and generate id
   }else{
-    const email = req.body.email;
     const id = generateRandomId();
     users[id] = { id, email, hashedPassword };
+    console.log("email:",email)
     req.session.id = id;
     res.redirect("/urls");
   }
