@@ -1,5 +1,7 @@
 const express = require("express");
-const cookieParser = require("cookie-parser")
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
@@ -139,8 +141,8 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 app.post("/urls/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);
-  if(user && password === user.password){
+  const user = getUserByEmail(email);  
+  if(user && bcrypt.compareSync(password, user.hashedPassword)) {
     res.cookie("id", user.id);
     res.redirect("/urls")
   } else { 
@@ -149,6 +151,7 @@ app.post("/urls/login", (req, res) => {
 });
 app.post("/urls/register", (req, res) => {
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
     //if no password and user exists return error
   if (getUserFromRequest(req) || password === "") {
     res.status(403).send("error");
@@ -156,7 +159,7 @@ app.post("/urls/register", (req, res) => {
   }else{
     const email = req.body.email;
     const id = generateRandomId();
-    users[id] = { id, email, password };
+    users[id] = { id, email, hashedPassword };
     res.cookie("id", id);
     res.redirect("/urls");
   }
