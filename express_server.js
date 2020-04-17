@@ -23,7 +23,6 @@ const { generateRandomString, generateRandomId } = require('./helper_functions/g
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ481W" },
   "9sm5xk": { longURL: "http://www.google.ca", userID: "aJ481W" }
-  // "shortURL": "longURL"
 };
 
 const users ={
@@ -39,41 +38,6 @@ const users ={
   }
 }
 
-
-
-
-// function generateRandomString() {
-//   let tinyURL = Math.random().toString(36).substring(6);
-//   return tinyURL;
-// }; 
-// function generateRandomId() {
-//   let userId = Math.random().toString(36).substring(6);
-//   return userId;
-// };
-// function getUserByEmail(email){
-//   for(const id in users){
-//     let user = users[id]
-//     if(user.email === email){
-//       return user
-//     }
-//   }
-//   return null
-// };
-// function urlsForUser(userID){
-//   const newObjForUrls = {}
-//   for(const url in urlDatabase ){
-//     let oneUser = urlDatabase[url]
-//     if(oneUser.userID === userID){
-//     newObjForUrls[url] = oneUser;
-//   }   
-// }
-//   return newObjForUrls; 
-// };
-
-// function getUserFromRequest(req) {
-//   const email = req.body.email;
-//   return getUserByEmail(email);
-// }; 
   
 app.get("/", (req, res) => {
   res.render("Hello!");
